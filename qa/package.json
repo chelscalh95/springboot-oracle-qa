@@ -1,0 +1,34 @@
+{
+  "name": "springboot-oracle-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "REST API and Oracle Database test automation for the springboot-oracle demo application",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test",
+    "test:core": "playwright test --project=preflight-db --project=preflight-api --project=db-validation --project=api-functional --project=api-validation --project=integration",
+    "test:api": "playwright test --project=api-functional --project=api-validation",
+    "test:db": "playwright test --project=db-validation",
+    "test:integration": "playwright test --project=integration",
+    "test:defects": "playwright test --project=known-defects",
+    "test:list": "playwright test --list",
+    "report": "playwright show-report reports/html",
+    "db:init": "tsx scripts/db-init.ts",
+    "db:cleanup": "tsx scripts/db-cleanup.ts",
+    "docs:sql": "tsx scripts/generate-sql-reference.ts",
+    "docs:check": "tsx scripts/check-docs.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^22.20.5",
+    "@types/oracledb": "^7.0.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "oracledb": "^26.0.0"
+  }
+}
