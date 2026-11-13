@@ -3,4 +3,5 @@ reports/
 reports-*/
 test-results/
 playwright-report/
+performance/results/
 .env
