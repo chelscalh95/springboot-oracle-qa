@@ -14,7 +14,7 @@ Validate the REST API of the `springboot-oracle` demo application and the integr
 **Out of scope / exclusions**
 - Browser or UI testing (the application has no UI).
 - Exploratory testing as a separate objective.
-- Performance, load, security penetration and concurrency testing.
+- Security penetration and concurrency testing.
 - Oracle UCP connection-pool behaviour, Oracle installation and the Jenkins pipeline of the upstream repository.
 - Any Hansen Technologies software; only the repository's own functionality is tested.
 

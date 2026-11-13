@@ -111,7 +111,9 @@ qa/docs/test-plan.md               scope, approach, risks, exit criteria
 qa/docs/test-cases.csv             38 test cases with status
 qa/docs/traceability-matrix.md     documented vs observed vs assumed expectations
 qa/docs/sql-reference.md           generated from sql/validation-queries.sql
+qa/docs/performance-testing.md     how to run and read the load tests
 qa/docs/defects/                   defect template and suspected-defect register
 qa/postman/                        collection and environment template
+qa/performance/                    JMeter plan, profiles and PowerShell runner
 .github/workflows/qa.yml           CI workflow
 ```

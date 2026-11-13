@@ -63,7 +63,9 @@ qa/
   tests/known-defects          expected behaviour for suspected defects
   scripts/                     db-init, db-cleanup, SQL-reference generator, docs consistency check
   postman/                     collection + environment template
-  docs/                        test plan, test cases (CSV), traceability matrix, SQL reference, defect template and register
+  performance/jmeter/          JMeter plan (.jmx) and smoke / load / stress profiles
+  performance/run-jmeter.ps1   headless runner: summary per request, non-zero exit on failed samples
+  docs/                        test plan, test cases (CSV), traceability matrix, SQL reference performace testing guide, defect template and register
 ```
 
 ## Prerequisites
