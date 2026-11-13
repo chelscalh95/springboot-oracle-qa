@@ -1,0 +1,135 @@
+name: QA - API and Oracle tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Needs no database: proves the app builds and the QA project is internally consistent.
+  static-checks:
+    name: Build and static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      # The only existing test (contextLoads) needs a live Oracle, so tests are skipped for the build.
+      - name: Build application
+        run: mvn -B -ntp -DskipTests package
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qa/package-lock.json
+      - name: Install QA dependencies
+        working-directory: qa
+        run: npm ci
+      - name: Type-check
+        working-directory: qa
+        run: npm run typecheck
+      - name: Check documentation matches the tests
+        working-directory: qa
+        run: npm run docs:check
+      - name: Test discovery (no database needed)
+        working-directory: qa
+        run: npm run test:list
+
+  # Needs a real Oracle: runs only when the service container is healthy and the tests really connect to it.
+  oracle-tests:
+    name: API and Oracle tests
+    needs: static-checks
+    runs-on: ubuntu-latest
+    # Pull requests from forks do not receive repository secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    services:
+      oracle:
+        image: gvenzl/oracle-free:23-slim-faststart
+        env:
+          ORACLE_PASSWORD: ${{ secrets.QA_ORACLE_SYS_PASSWORD }}
+          APP_USER: SPRINGORCL
+          APP_USER_PASSWORD: ${{ secrets.QA_ORACLE_APP_PASSWORD }}
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+    env:
+      ORACLE_USER: SPRINGORCL
+      ORACLE_PASSWORD: ${{ secrets.QA_ORACLE_APP_PASSWORD }}
+      ORACLE_CONNECT_STRING: localhost:1521/FREEPDB1
+      API_BASE_URL: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build application
+        run: mvn -B -ntp -DskipTests package
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: qa/package-lock.json
+      - name: Install QA dependencies
+        working-directory: qa
+        run: npm ci
+      - name: Create the PERSON table
+        working-directory: qa
+        run: npm run db:init
+      - name: Start the application against the Oracle service
+        env:
+          SPRING_PROFILES_ACTIVE: dev
+          SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//localhost:1521/FREEPDB1
+          SPRING_DATASOURCE_USERNAME: SPRINGORCL
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.QA_ORACLE_APP_PASSWORD }}
+        run: |
+          nohup java -jar target/getIndividualData-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/data-app/individuals > /dev/null; then
+              echo "application is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "application did not start"
+          tail -n 100 app.log
+          exit 1
+      # Release gate: fails the job when any executed test fails.
+      - name: Core tests
+        working-directory: qa
+        run: npm run test:core
+      # Known-defect checks are reported with their own report but do not block the pipeline.
+      - name: Known-defect checks (non-blocking)
+        if: always()
+        continue-on-error: true
+        working-directory: qa
+        env:
+          QA_REPORT_DIR: reports-defects
+        run: npm run test:defects
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: |
+            qa/reports/
+            qa/reports-defects/
+          if-no-files-found: ignore
+      - name: Upload application log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-log
+          path: app.log
+          if-no-files-found: ignore
