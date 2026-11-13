@@ -1,0 +1,27 @@
+# Local Oracle Database Free for the QA suite.
+# NOT verified in the authoring environment (no Docker available there): see README, "First-run checklist".
+#
+# Variables (shell or qa/.env; never commit values):
+#   ORACLE_SYS_PASSWORD  password for the container's SYS/SYSTEM accounts
+#   ORACLE_USER          application schema to create (default SPRINGORCL, the schema the application expects)
+#   ORACLE_PASSWORD      password of that application schema (also what the tests and the application use)
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: springboot-oracle-qa-db
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD:?Set ORACLE_SYS_PASSWORD}
+      APP_USER: ${ORACLE_USER:-SPRINGORCL}
+      APP_USER_PASSWORD: ${ORACLE_PASSWORD:?Set ORACLE_PASSWORD}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+volumes:
+  oracle-data:
