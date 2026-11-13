@@ -98,3 +98,7 @@ Once the above steps are completed, run the Spring Boot application.
 The application contains a data.sql file in the resources folder which will insert some sample data during application start up.
 
 The API will run on http://localhost:8080/data-app/individuals
+
+## QA test automation
+
+The [`qa/`](qa/README.md) folder contains a Playwright (TypeScript) API test suite, Oracle SQL validation, a Postman collection, test documentation and a GitHub Actions workflow for this application.
